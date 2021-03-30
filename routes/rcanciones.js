@@ -41,6 +41,6 @@ module.exports = function (app, swig) {
     });
 
     app.post("/cancion", function (req, res) {
-        res.send("Canción agregada: " + req.body.nombre + "<br>" + " género: " + res.body.genero + "<br>" + " precio: " + req.body.precio);
+        res.send("Canción agregada: " + req.body.nombre + "<br>" + " género: " + req.body.genero + "<br>" + " precio: " + req.body.precio);
     });
 };
