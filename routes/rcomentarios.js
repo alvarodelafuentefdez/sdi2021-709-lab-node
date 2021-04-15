@@ -14,7 +14,8 @@ module.exports = function (app, swig, gestorBD) {
 
         gestorBD.agregarComentario(comentario, function (id) {
             if (id == null) {
-                res.send("Error al insertar comentario");
+                req.session.errores = {mensaje: 'Error al insertar comentario', tipoMensaje: "alert-danger"};
+                res.redirect("/errors");
             } else {
                 res.send('Comentario insertado: ' + id);
             }

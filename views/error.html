@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block titulo %} Tienda – uoMusic {% endblock %}
+{% block contenido_principal %}
+<h1>¡Aviso!</h1>
+<div class='alert " + {{ tipoMensaje }} + "'>
+    <p>{{ mensaje }}</p>
+</div>
+{% endblock %}
