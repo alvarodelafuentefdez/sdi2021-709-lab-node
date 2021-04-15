@@ -114,6 +114,8 @@ module.exports = function (app, swig, gestorBD) {
 
     app.get('/cancion/:id', function (req, res) {
         let criterio = {"_id": gestorBD.mongo.ObjectID(req.params.id)}
+        let user = req.session.usuario;
+        let cancionId = gestorBD.mongo.ObjectID(req.params.id);
 
         gestorBD.obtenerCanciones(criterio, function (canciones) {
             if (canciones == null) {
@@ -125,19 +127,30 @@ module.exports = function (app, swig, gestorBD) {
                     if (comentarios == null) {
                         this.comentarios = undefined;
                     } else {
-                        this.comentarios = comentarios;
+                        comprarCancion(user, cancionId, function (comprar) {
+                                if (comprar) {
+                                    let respuesta = swig.renderFile('views/bcancion.html',
+                                        {
+                                            cancion: canciones[0],
+                                            comentarios: comentarios,
+                                            comprar: true
+                                        });
+
+                                    res.send(respuesta);
+                                } else {
+                                    let respuesta = swig.renderFile('views/bcancion.html',
+                                        {
+                                            cancion: canciones[0],
+                                            comentarios: comentarios,
+                                            comprar: false
+                                        });
+
+                                    res.send(respuesta);
+                                }
+                            }
+                        );
                     }
-
-                    let respuesta = swig.renderFile('views/bcancion.html',
-                        {
-                            cancion: canciones[0],
-                            comentarios: this.comentarios
-                        });
-
-                    res.send(respuesta);
                 });
-
-
             }
         });
     });
@@ -238,15 +251,23 @@ module.exports = function (app, swig, gestorBD) {
 
     app.get('/cancion/comprar/:id', function (req, res) {
         let cancionId = gestorBD.mongo.ObjectID(req.params.id);
-        let compra = {
-            usuario: req.session.usuario,
-            cancionId: cancionId
-        }
-        gestorBD.insertarCompra(compra, function (idCompra) {
-            if (idCompra == null) {
-                res.send(respuesta);
+        let user = req.session.usuario;
+
+        comprarCancion(user, cancionId, function (comprar) {
+            if (comprar) {
+                let compra = {
+                    usuario: user,
+                    cancionId: cancionId
+                }
+                gestorBD.insertarCompra(compra, function (idCompra) {
+                    if (idCompra == null) {
+                        res.send(respuesta);
+                    } else {
+                        res.redirect("/compras");
+                    }
+                });
             } else {
-                res.redirect("/compras");
+                res.send("No se permite la compra");
             }
         });
     });
@@ -274,5 +295,22 @@ module.exports = function (app, swig, gestorBD) {
             }
         });
     });
-}
-;
+
+    function comprarCancion(user, id_cancion, funcion) {
+        let criterioAutor = {$and: [{"_id": id_cancion}, {"autor": user}]};
+        let criterioCompra = {$and: [{"cancionId": id_cancion}, {"usuario": user}]};
+
+        gestorBD.obtenerCanciones(criterioAutor, function (canciones) {
+            if (canciones == null || canciones.length > 0)
+                funcion(false);
+            else {
+                gestorBD.obtenerCompras(criterioCompra, function (compras) {
+                    if (compras == null || compras.length > 0)
+                        funcion(false);
+                    else
+                        funcion(true);
+                });
+            }
+        });
+    }
+};
