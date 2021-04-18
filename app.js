@@ -2,6 +2,9 @@
 var express = require('express');
 var app = express();
 
+let rest = require('request');
+app.set('rest', rest);
+
 let jwt = require('jsonwebtoken');
 app.set('jwt', jwt);
 
